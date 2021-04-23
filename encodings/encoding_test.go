@@ -17,10 +17,16 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tigrannajaryan/exp-otelproto/core"
-	"github.com/tigrannajaryan/exp-otelproto/encodings/baseline"
 	"github.com/tigrannajaryan/exp-otelproto/encodings/experimental"
 	"github.com/tigrannajaryan/exp-otelproto/encodings/otelp2"
 	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp"
+	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_4"
+	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_5"
+	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_6"
+	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_7"
+	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_8"
+	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_exp"
+	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_next"
 )
 
 const spansPerBatch = 100
@@ -39,13 +45,41 @@ var tests = []struct {
 	//	name: "SepAnyExtValue",
 	//	gen:  func() core.Generator { return baseline2.NewGenerator() },
 	//},
+	// {
+	// 	name: "OTLP 0.4",
+	// 	gen:  func() core.Generator { return otlp.NewGenerator() },
+	// },
+	// {
+	// 	name: "OTLP HEAD",
+	// 	gen:  func() core.Generator { return baseline.NewGenerator() },
+	// },
 	{
-		name: "OTLP 0.4",
-		gen:  func() core.Generator { return otlp.NewGenerator() },
+		name: "OTLP 0.4 (Gogo Faster)",
+		gen:  func() core.Generator { return otlp_4.NewGenerator() },
 	},
 	{
-		name: "OTLP HEAD",
-		gen:  func() core.Generator { return baseline.NewGenerator() },
+		name: "OTLP 0.5 (Gogo Faster)",
+		gen:  func() core.Generator { return otlp_5.NewGenerator() },
+	},
+	{
+		name: "OTLP 0.6 (Gogo Faster)",
+		gen:  func() core.Generator { return otlp_6.NewGenerator() },
+	},
+	{
+		name: "OTLP 0.7 (Gogo Faster)",
+		gen:  func() core.Generator { return otlp_7.NewGenerator() },
+	},
+	{
+		name: "OTLP 0.8 (Gogo Faster)",
+		gen:  func() core.Generator { return otlp_8.NewGenerator() },
+	},
+	{
+		name: "OTLP HEAD (Gogo Faster)",
+		gen:  func() core.Generator { return otlp_next.NewGenerator() },
+	},
+	{
+		name: "OTLP HEAD No oneof (Gogo Faster)",
+		gen:  func() core.Generator { return otlp_exp.NewGenerator() },
 	},
 	//{
 	//	name: "OTELP2",
@@ -63,10 +97,10 @@ var tests = []struct {
 	//	name: "Alternate",
 	//	gen:  func() core.Generator { return experimental.NewGenerator() },
 	//},
-	//{
-	//	name: "Current(Gogo)",
-	//	gen:  func() core.Generator { return otlp_gogo.NewGenerator() },
-	//},
+	// {
+	// 	name: "Current(Gogo)",
+	// 	gen:  func() core.Generator { return otlp_gogo.NewGenerator() },
+	// },
 	//{
 	//	name: "gogoCustom",
 	//	gen:  func() core.Generator { return otlp_gogo2.NewGenerator() },
@@ -114,7 +148,7 @@ func BenchmarkGenerate(b *testing.B) {
 		for _, test := range tests {
 			b.Run(test.name+"/"+batchType.name, func(b *testing.B) {
 				gen := test.gen()
-				for i:=0; i<b.N; i++ {
+				for i := 0; i < b.N; i++ {
 					batches := batchType.batchGen(gen)
 					if batches == nil {
 						// Unsupported test type and batch type combination.
@@ -465,6 +499,12 @@ func TestEncodeSize(t *testing.T) {
 			},
 		},
 		{
+			name: "Metric/Gauge",
+			genFunc: func(gen core.Generator) core.ExportRequest {
+				return gen.GenerateMetricBatch(batchSize, 1, true, false, false)
+			},
+		},
+		{
 			name: "Metric/Histogram",
 			genFunc: func(gen core.Generator) core.ExportRequest {
 				return gen.GenerateMetricBatch(batchSize, 1, false, true, false)
@@ -552,8 +592,8 @@ func TestEncodeSize(t *testing.T) {
 func TestEncodeSizeFromFile(t *testing.T) {
 
 	var tests = []struct {
-		name string
-		translator  func() core.SpanTranslator
+		name       string
+		translator func() core.SpanTranslator
 	}{
 		//{
 		//	name: "SepAnyExtValue",
@@ -564,12 +604,12 @@ func TestEncodeSizeFromFile(t *testing.T) {
 		//	gen:  func() core.Generator { return otlp.NewGenerator() },
 		//},
 		{
-			name: "OTLP",
-			translator:  func() core.SpanTranslator { return &otlp.SpanTranslator{} },
+			name:       "OTLP",
+			translator: func() core.SpanTranslator { return &otlp.SpanTranslator{} },
 		},
 		{
-			name: "OTELP2",
-			translator:  func() core.SpanTranslator { return &otelp2.SpanTranslator{} },
+			name:       "OTELP2",
+			translator: func() core.SpanTranslator { return &otelp2.SpanTranslator{} },
 		},
 		//{
 		//	name: "MoreFieldsinAKV",
@@ -618,75 +658,75 @@ func TestEncodeSizeFromFile(t *testing.T) {
 
 	for _, test := range tests {
 		fmt.Println("Encoding                       Uncompressed  Improved      Compressed  Improved      Compressed  Improved")
-			t.Run(test.name, func(t *testing.T) {
-				translator := test.translator()
+		t.Run(test.name, func(t *testing.T) {
+			translator := test.translator()
 
-				f,err := os.Open("testdata/traces.protobuf")
-				assert.NoError(t, err)
+			f, err := os.Open("testdata/traces.protobuf")
+			assert.NoError(t, err)
 
-				uncompressedSize := 0
-				zlibedSize := 0
-				zstdedSize := 0
+			uncompressedSize := 0
+			zlibedSize := 0
+			zstdedSize := 0
 
-				for {
-					msg := otlp.ReadTraceMessage(f)
-					if msg == nil {
-						break
-					}
-
-					batch := translator.TranslateSpans(msg)
-					if batch == nil {
-						// Skip this case.
-						return
-					}
-
-					bodyBytes, err := proto.Marshal(batch.(proto.Message))
-					if err != nil {
-						log.Fatal(err)
-					}
-
-					zlibedBytes := doZlib(bodyBytes)
-					zstdedBytes := doZstd(bodyBytes)
-
-					uncompressedSize += len(bodyBytes)
-					zlibedSize += len(zlibedBytes)
-					zstdedSize += len(zstdedBytes)
+			for {
+				msg := otlp.ReadTraceMessage(f)
+				if msg == nil {
+					break
 				}
 
-				uncompressedRatioStr := "[1.000]"
-				zlibedRatioStr := "[1.000]"
-				zstdedRatioStr := "[1.000]"
-
-				if firstUncompessedSize == 0 {
-					firstUncompessedSize = uncompressedSize
-				} else {
-					uncompressedRatioStr = fmt.Sprintf("[%1.3f]", float64(firstUncompessedSize)/float64(uncompressedSize))
+				batch := translator.TranslateSpans(msg)
+				if batch == nil {
+					// Skip this case.
+					return
 				}
 
-				if firstZlibedSize == 0 {
-					firstZlibedSize = zlibedSize
-				} else {
-					zlibedRatioStr = fmt.Sprintf("[%1.3f]", float64(firstZlibedSize)/float64(zlibedSize))
+				bodyBytes, err := proto.Marshal(batch.(proto.Message))
+				if err != nil {
+					log.Fatal(err)
 				}
 
-				if firstZstdedSize == 0 {
-					firstZstdedSize = zstdedSize
-				} else {
-					zstdedRatioStr = fmt.Sprintf("[%1.3f]", float64(firstZstdedSize)/float64(zstdedSize))
-				}
+				zlibedBytes := doZlib(bodyBytes)
+				zstdedBytes := doZstd(bodyBytes)
 
-				fmt.Printf(
-					"%-31v %6d bytes%8s, zlib %5d bytes%8s, zstd %5d bytes%8s\n",
-					test.name,
-					uncompressedSize,
-					uncompressedRatioStr,
-					zlibedSize,
-					zlibedRatioStr,
-					zstdedSize,
-					zstdedRatioStr,
-				)
+				uncompressedSize += len(bodyBytes)
+				zlibedSize += len(zlibedBytes)
+				zstdedSize += len(zstdedBytes)
+			}
 
-			})
+			uncompressedRatioStr := "[1.000]"
+			zlibedRatioStr := "[1.000]"
+			zstdedRatioStr := "[1.000]"
+
+			if firstUncompessedSize == 0 {
+				firstUncompessedSize = uncompressedSize
+			} else {
+				uncompressedRatioStr = fmt.Sprintf("[%1.3f]", float64(firstUncompessedSize)/float64(uncompressedSize))
+			}
+
+			if firstZlibedSize == 0 {
+				firstZlibedSize = zlibedSize
+			} else {
+				zlibedRatioStr = fmt.Sprintf("[%1.3f]", float64(firstZlibedSize)/float64(zlibedSize))
+			}
+
+			if firstZstdedSize == 0 {
+				firstZstdedSize = zstdedSize
+			} else {
+				zstdedRatioStr = fmt.Sprintf("[%1.3f]", float64(firstZstdedSize)/float64(zstdedSize))
+			}
+
+			fmt.Printf(
+				"%-31v %6d bytes%8s, zlib %5d bytes%8s, zstd %5d bytes%8s\n",
+				test.name,
+				uncompressedSize,
+				uncompressedRatioStr,
+				zlibedSize,
+				zlibedRatioStr,
+				zstdedSize,
+				zstdedRatioStr,
+			)
+
+		})
 		fmt.Println("")
 	}
 }
@@ -774,9 +814,9 @@ func BenchmarkAttributeValueSize(b *testing.B) {
 	}
 }
 
-func TestJson(t*testing.T) {
+func TestJson(t *testing.T) {
 	g := otelp2.NewGenerator()
-	b := g.GenerateSpanBatch(1,1,1)
+	b := g.GenerateSpanBatch(1, 1, 1)
 	// proto.Marshal(b.(*experimental2.TraceExportRequest))
 	//json := protojson.Format(b.(*experimental2.TraceExportRequest))
 	m := jsonpb.Marshaler{}
