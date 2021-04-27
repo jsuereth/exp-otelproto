@@ -1,4 +1,4 @@
-package otlp_exp
+package otlp_exp2
 
 import (
 	"math/rand"
@@ -188,7 +188,7 @@ func (g *Generator) GenerateLogBatch(logsPerBatch int, attrsPerLog int) core.Exp
 	return batch
 }
 
-func GenInt64Timeseries(startTime time.Time, offset int, valuesPerTimeseries int) *Gauge {
+func GenInt64Timeseries(startTime time.Time, offset int, valuesPerTimeseries int) []*NumberDataPoint {
 	var timeseries []*NumberDataPoint
 	for j := 0; j < 5; j++ {
 		var points []*NumberDataPoint
@@ -198,19 +198,15 @@ func GenInt64Timeseries(startTime time.Time, offset int, valuesPerTimeseries int
 
 			point := NumberDataPoint{
 				TimeUnixNano: pointTs,
-				AsInt:        int64(offset * j * k),
-				Attributes: []*KeyValue{
+				Value:        &NumberDataPoint_AsInt{AsInt: int64(offset * j * k)},
+				Labels: []*StringKeyValue{
 					{
-						Key: "label1",
-						Value: &AnyValue{
-							Value: &AnyValue_StringValue{StringValue: "val1"},
-						},
+						Key:   "label1",
+						Value: "val1",
 					},
 					{
-						Key: "label2",
-						Value: &AnyValue{
-							Value: &AnyValue_StringValue{StringValue: "val2"},
-						},
+						Key:   "label2",
+						Value: "val2",
 					},
 				},
 			}
@@ -225,12 +221,13 @@ func GenInt64Timeseries(startTime time.Time, offset int, valuesPerTimeseries int
 		timeseries = append(timeseries, points...)
 	}
 
-	return &Gauge{DataPoints: timeseries}
+	return timeseries
 }
 
 func genInt64Gauge(startTime time.Time, i int, valuesPerTimeseries int) *Metric {
 	descr := GenMetricDescriptor(i)
-	descr.Gauge = GenInt64Timeseries(startTime, i, valuesPerTimeseries)
+	descr.Type = Metric_GAUGE
+	descr.SumOrGaugeDataPoints = GenInt64Timeseries(startTime, i, valuesPerTimeseries)
 	return descr
 }
 
@@ -263,7 +260,7 @@ func genHistogram(startTime time.Time, i int, valuesPerTimeseries int) *Metric {
 				BucketCounts: []uint64{12, 345},
 				Exemplars: []*Exemplar{
 					{
-						AsDouble:     val,
+						Value:        &Exemplar_AsDouble{AsDouble: val},
 						TimeUnixNano: pointTs,
 					},
 				},
@@ -292,7 +289,8 @@ func genHistogram(startTime time.Time, i int, valuesPerTimeseries int) *Metric {
 		timeseries2 = append(timeseries2, points...)
 	}
 
-	descr.Histogram = &Histogram{DataPoints: timeseries2}
+	descr.Type = Metric_HISTOGRAM
+	descr.HistogramDataPoints = timeseries2
 
 	return descr
 }
@@ -310,7 +308,7 @@ func genSummary(startTime time.Time, i int, valuesPerTimeseries int) *Metric {
 			val := float64(i * j * k)
 			point := NumberDataPoint{
 				TimeUnixNano: pointTs,
-				AsDouble:     val,
+				Value:        &NumberDataPoint_AsDouble{AsDouble: val},
 				Attributes: []*KeyValue{
 					{
 						Key: "label1",
@@ -335,7 +333,8 @@ func genSummary(startTime time.Time, i int, valuesPerTimeseries int) *Metric {
 		timeseries2 = append(timeseries2, points...)
 	}
 
-	descr.Sum = &Sum{DataPoints: timeseries2}
+	descr.SumOrGaugeDataPoints = timeseries2
+	descr.Type = Metric_SUM
 
 	return descr
 }

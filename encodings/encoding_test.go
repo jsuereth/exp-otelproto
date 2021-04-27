@@ -21,11 +21,9 @@ import (
 	"github.com/tigrannajaryan/exp-otelproto/encodings/otelp2"
 	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp"
 	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_4"
-	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_5"
-	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_6"
-	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_7"
 	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_8"
 	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_exp"
+	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_exp2"
 	"github.com/tigrannajaryan/exp-otelproto/encodings/otlp_next"
 )
 
@@ -57,18 +55,18 @@ var tests = []struct {
 		name: "OTLP 0.4 (Gogo Faster)",
 		gen:  func() core.Generator { return otlp_4.NewGenerator() },
 	},
-	{
-		name: "OTLP 0.5 (Gogo Faster)",
-		gen:  func() core.Generator { return otlp_5.NewGenerator() },
-	},
-	{
-		name: "OTLP 0.6 (Gogo Faster)",
-		gen:  func() core.Generator { return otlp_6.NewGenerator() },
-	},
-	{
-		name: "OTLP 0.7 (Gogo Faster)",
-		gen:  func() core.Generator { return otlp_7.NewGenerator() },
-	},
+	// {
+	// 	name: "OTLP 0.5 (Gogo Faster)",
+	// 	gen:  func() core.Generator { return otlp_5.NewGenerator() },
+	// },
+	// {
+	// 	name: "OTLP 0.6 (Gogo Faster)",
+	// 	gen:  func() core.Generator { return otlp_6.NewGenerator() },
+	// },
+	// {
+	// 	name: "OTLP 0.7 (Gogo Faster)",
+	// 	gen:  func() core.Generator { return otlp_7.NewGenerator() },
+	// },
 	{
 		name: "OTLP 0.8 (Gogo Faster)",
 		gen:  func() core.Generator { return otlp_8.NewGenerator() },
@@ -78,8 +76,12 @@ var tests = []struct {
 		gen:  func() core.Generator { return otlp_next.NewGenerator() },
 	},
 	{
-		name: "OTLP HEAD No oneof (Gogo Faster)",
+		name: "OTLP (Exp: No oneof) (Gogo Faster)",
 		gen:  func() core.Generator { return otlp_exp.NewGenerator() },
+	},
+	{
+		name: "OTLP (Exp: Flat Metrics) (Gogo Faster)",
+		gen:  func() core.Generator { return otlp_exp2.NewGenerator() },
 	},
 	//{
 	//	name: "OTELP2",
@@ -131,10 +133,10 @@ var batchTypes = []struct {
 	//{name: "Logs", batchGen: generateLogBatches},
 	//{name: "Trace/Attribs", batchGen: generateAttrBatches},
 	//{name: "Trace/Events", batchGen: generateTimedEventBatches},
-	{name: "Metric/Int64", batchGen: generateMetricInt64Batches},
-	{name: "Metric/Summary", batchGen: generateMetricSummaryBatches},
-	{name: "Metric/Histogram", batchGen: generateMetricHistogramBatches},
-	{name: "Metric/HistogramSeries", batchGen: generateMetricHistogramSeriesBatches},
+	// {name: "Metric/Gauage(Int64)", batchGen: generateMetricInt64Batches},
+	// {name: "Metric/Summary", batchGen: generateMetricSummaryBatches},
+	// {name: "Metric/Histogram", batchGen: generateMetricHistogramBatches},
+	// {name: "Metric/HistogramSeries", batchGen: generateMetricHistogramSeriesBatches},
 	{name: "Metric/Mix", batchGen: generateMetricOneBatches},
 	{name: "Metric/MixSeries", batchGen: generateMetricSeriesBatches},
 }
